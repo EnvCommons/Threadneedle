@@ -1,0 +1,4 @@
+numpy
+pydantic
+openreward
+tavily-python>=0.1.0
