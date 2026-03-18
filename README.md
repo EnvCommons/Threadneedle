@@ -21,7 +21,7 @@ Named after Threadneedle Street, London - the historic home of the Bank of Engla
 
 ## Compute Requirements
 
-Agents in Threadneedle are given a sandbox with a Python data science environment for building models.
+Agents in Threadneedle are given a sandbox with a Python data science environment.
 
 ## Tasks
 
