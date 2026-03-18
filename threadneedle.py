@@ -270,8 +270,7 @@ class Threadneedle(CLIEnvironment):
             qe: QE flow (% of GDP), positive = purchases, negative = QT.
                 Must be between -5.0 and 5.0. Default 0.0.
 
-        Returns the new economic state, comparison with Taylor Rule baseline,
-        and the reward for this quarter.
+        Returns the new economic state and the reward for this quarter.
         """
         if self.finished:
             return ToolOutput(
@@ -377,12 +376,18 @@ class Threadneedle(CLIEnvironment):
         result += f"  Long-term Rate:  {s.r_long:6.2f}%\n"
         result += f"  Cumulative QE:   {s.cum_qe:+6.1f}% GDP\n\n"
 
+        """
         result += "BASELINE (Taylor Rule):\n"
         result += f"  Inflation: {ts.pi:.2f}%  |  Output Gap: {ts.y:+.2f}%  |  Unemployment: {ts.u:.2f}%\n\n"
+        """
 
         result += f"SCORE:\n"
         result += f"  Your Loss:      {agent_loss:.4f}\n"
+
+        """
         result += f"  Taylor Loss:    {taylor_loss:.4f}\n"
+        """
+        
         result += f"  Quarter Reward: {quarter_reward:+.4f}  ({'better' if quarter_reward > 0 else 'worse'} than Taylor)\n"
         result += f"  Cumulative:     {self.cumulative_reward:+.4f}\n"
 
@@ -441,7 +446,6 @@ class Threadneedle(CLIEnvironment):
         View the full history of policy decisions and economic outcomes.
 
         Shows quarter-by-quarter data for both the agent's policy
-        and the Taylor Rule baseline.
         """
         if not self.history:
             return ToolOutput(
@@ -464,7 +468,7 @@ class Threadneedle(CLIEnvironment):
                 f"{rec['quarter']:3d} | "
                 f"{ap['bank_rate']:5.2f} {ap['qe']:+5.1f} | "
                 f"{ast['inflation']:5.2f} {ast['output_gap']:+6.2f} {ast['unemployment']:5.2f} {ast['house_price_growth']:+6.2f} | "
-                f"{tp['bank_rate']:6.2f} | "
+ #               f"{tp['bank_rate']:6.2f} | "
                 f"{rec['quarter_reward']:+7.4f}\n"
             )
 
@@ -525,9 +529,6 @@ You have access to web search and a compute sandbox. You are encouraged to:
   scenario analysis tools to inform your policy decisions
 - Study how different types of households respond to monetary policy
 - Research how QE affects asset prices, long-term rates, and inequality
-
-Your performance is measured against a Taylor Rule baseline each quarter.
-Positive reward means you outperformed the rule-based policy.
 
 You have {TOTAL_QUARTERS} quarters. Begin by analysing the economic situation
 and researching relevant literature and strategies, then set your policy for

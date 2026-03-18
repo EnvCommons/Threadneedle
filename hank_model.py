@@ -393,7 +393,7 @@ def _make_supply_shock() -> ScenarioDefinition:
     return ScenarioDefinition(
         name="supply_shock",
         description=(
-            "Energy price crisis (modelled on 2021-2023 UK experience). "
+            "Energy price crisis." # (modelled on 2021-2023 UK experience)
             "A sustained supply shock drives cost-push inflation while dampening demand. "
         ),
         initial_conditions=initial,
@@ -423,7 +423,7 @@ def _make_demand_shock() -> ScenarioDefinition:
     return ScenarioDefinition(
         name="demand_shock",
         description=(
-            "Pandemic-style demand collapse (modelled on COVID-19 UK, 2020). "
+            "Pandemic-style demand collapse." # (modelled on COVID-19 UK, 2020)
             "A sudden, severe demand shock with rapid partial recovery. "
         ),
         initial_conditions=initial,
@@ -456,7 +456,7 @@ def _make_financial_crisis() -> ScenarioDefinition:
     return ScenarioDefinition(
         name="financial_crisis",
         description=(
-            "Financial crisis (modelled on 2007-2009 GFC in the UK). "
+            "Financial crisis " #  (modelled on 2007-2009 GFC in the UK).
             "A credit crunch collapses demand, house prices, and confidence. "
             "Sterling depreciates sharply."
         ),
@@ -515,7 +515,7 @@ def _make_stagflation() -> ScenarioDefinition:
         name="stagflation",
         description=(
             "Stagflation: simultaneous cost-push inflation and demand weakness "
-            "(inspired by 1970s UK). Rising inflation and falling output create "
+            ". Rising inflation and falling output create " # (inspired by 1970s UK)
             "the classic central banker's dilemma -- rate hikes fight inflation "
             "but deepen the recession."
         ),
@@ -548,7 +548,7 @@ def _make_global_tightening() -> ScenarioDefinition:
     return ScenarioDefinition(
         name="global_tightening",
         description=(
-            "Global monetary tightening (modelled on 2022-23 Fed/ECB hikes). "
+            "Global monetary tightening." # (modelled on 2022-23 Fed/ECB hikes)
             "Foreign central banks raise rates sharply, causing sterling to depreciate "
             "and importing inflation via the exchange rate channel."
         ),
