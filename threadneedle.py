@@ -17,8 +17,8 @@ from typing import Dict, List, Any
 from copy import deepcopy
 from pydantic import BaseModel, Field
 
-from cli_environment import CLIEnvironment
-from openreward.environments import JSONObject, ToolOutput, tool, TextBlock
+from openreward.environments import Environment, JSONObject, ToolOutput, tool, TextBlock
+from openreward.toolsets import CLIToolset
 from openreward import AsyncOpenReward, SandboxSettings
 from tavily import AsyncTavilyClient
 
@@ -66,7 +66,7 @@ class FetchUrlInput(BaseModel, extra="forbid"):
 TOTAL_QUARTERS = 20
 
 
-class Threadneedle(CLIEnvironment):
+class Threadneedle(Environment):
     """
     Bank of England Monetary Policy Committee simulation.
 
@@ -81,8 +81,12 @@ class Threadneedle(CLIEnvironment):
     Performance is measured against a Taylor Rule baseline.
     """
 
+    # 9-tool sandboxed CLI surface provided by the SDK. The class attribute
+    # makes the framework auto-instantiate the toolset against self.sandbox.
+    toolsets = [CLIToolset]
+
     def __init__(self, task_spec: JSONObject, secrets: dict[str, str] = {}) -> None:
-        super().__init__(task_spec, secrets=secrets)
+        super().__init__(task_spec)
         self.validated = TaskSpec.model_validate(task_spec)
 
         scenario_id = self.validated.id
