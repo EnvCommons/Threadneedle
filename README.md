@@ -66,7 +66,7 @@ Agents have access to three categories of tools:
 
 ### Research Tools (2)
 4. **`web_search(query)`** -- Search the web for monetary policy research, macroeconomic theory, and central bank publications.
-5. **`fetch_url(url, page)`** -- Fetch content from a URL with pagination support.
+5. **`web_fetch(url, page)`** -- Fetch content from a URL with pagination support.
 
 ### CLI Tools (9)
 6. **`bash(command)`** -- Execute shell commands in the compute sandbox.

@@ -1,4 +1,3 @@
 numpy
 pydantic
-openreward
-tavily-python>=0.1.0
+openreward[search]>=0.1.153

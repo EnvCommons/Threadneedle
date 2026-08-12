@@ -18,9 +18,8 @@ from copy import deepcopy
 from pydantic import BaseModel, Field
 
 from openreward.environments import Environment, JSONObject, ToolOutput, tool, TextBlock
-from openreward.toolsets import CLIToolset
+from openreward.toolsets import CLIToolset, WebToolset
 from openreward import AsyncOpenReward, SandboxSettings
-from tavily import AsyncTavilyClient
 
 from hank_model import (
     HANKModel,
@@ -66,6 +65,22 @@ class FetchUrlInput(BaseModel, extra="forbid"):
 TOTAL_QUARTERS = 20
 
 
+class SoftWebToolset(WebToolset):
+    """WebToolset that degrades instead of ending the rollout.
+
+    Web research is an optional aid here, not the task: reward comes from the 20
+    quarters of policy decisions via set_policy, and this environment has always
+    treated a missing search credential as "that tool is unavailable" rather than
+    a fatal error. The SDK default raises on a missing key or exhausted quota,
+    which is right for an environment whose reward depends on retrieval and wrong
+    for this one.
+    """
+
+    def __init__(self, env=None, **kwargs):
+        kwargs.setdefault("raise_on_fatal", False)
+        super().__init__(env, **kwargs)
+
+
 class Threadneedle(Environment):
     """
     Bank of England Monetary Policy Committee simulation.
@@ -83,7 +98,12 @@ class Threadneedle(Environment):
 
     # 9-tool sandboxed CLI surface provided by the SDK. The class attribute
     # makes the framework auto-instantiate the toolset against self.sandbox.
-    toolsets = [CLIToolset]
+    # SoftWebToolset supplies web_search / web_fetch. Which provider answers is
+    # process configuration (OPENREWARD_SEARCH_BACKEND, default "backsearch").
+    toolsets = [CLIToolset, SoftWebToolset]
+
+    # Search hits keep their snippets, as the prompt assumes.
+    web_include_snippets = True
 
     def __init__(self, task_spec: JSONObject, secrets: dict[str, str] = {}) -> None:
         super().__init__(task_spec)
@@ -129,12 +149,11 @@ class Threadneedle(Environment):
             or_client = AsyncOpenReward(api_key=api_key)
             self.sandbox = or_client.sandbox(self.sandbox_settings)
 
-        # Tavily client for web search
-        tavily_api_key = secrets.get("tavily_api_key")
-        if tavily_api_key:
-            self.tavily_client = AsyncTavilyClient(api_key=tavily_api_key)
-        else:
-            self.tavily_client = None
+        # Read live by the toolset on every tool call, so the search backend takes
+        # its credentials from the session rather than the server process. The
+        # configured backend picks the key it needs: `api_key` for backsearch,
+        # `tavily_api_key` for tavily.
+        self.search_secrets = secrets
 
     async def setup(self) -> None:
         if hasattr(self, 'sandbox') and self.sandbox is not None:
@@ -145,122 +164,6 @@ class Threadneedle(Environment):
             await self.sandbox.stop()
 
     # ── Web tools ─────────────────────────────────────────────
-
-    @tool
-    async def web_search(self, params: WebSearchInput) -> ToolOutput:
-        """
-        Search the web for information. Useful for researching monetary policy,
-        macroeconomic theory, central bank strategy, and economic modelling approaches.
-        """
-        if self.tavily_client is None:
-            raise ValueError(
-                "Tavily API key not provided. Pass 'tavily_api_key' in secrets."
-            )
-
-        try:
-            response = await self.tavily_client.search(
-                query=params.query,
-                search_depth="basic",
-                max_results=5,
-            )
-
-            results = response.get("results", [])
-            if not results:
-                return ToolOutput(
-                    blocks=[TextBlock(text="No search results found.")],
-                    metadata={"query": params.query, "results": []},
-                    reward=0.0,
-                    finished=False,
-                )
-
-            display_parts = [f"Search results for: {params.query}\n"]
-            for i, result in enumerate(results, 1):
-                title = result.get("title", "No title")
-                url = result.get("url", "")
-                snippet = result.get("content", "")
-                display_parts.append(f"{i}. {title}\n   URL: {url}\n   {snippet}\n")
-
-            display_text = "\n".join(display_parts)
-
-            return ToolOutput(
-                blocks=[TextBlock(text=display_text)],
-                metadata={
-                    "query": params.query,
-                    "results": results,
-                    "count": len(results),
-                },
-                reward=0.0,
-                finished=False,
-            )
-        except Exception as e:
-            return ToolOutput(
-                blocks=[TextBlock(text=f"Web search failed: {str(e)}")],
-                metadata={"query": params.query, "error": str(e)},
-                reward=0.0,
-                finished=False,
-            )
-
-    @tool
-    async def fetch_url(self, params: FetchUrlInput) -> ToolOutput:
-        """
-        Fetch and return the text content from a specific URL.
-        Content is paginated -- use the page parameter to retrieve additional pages.
-        """
-        if self.tavily_client is None:
-            raise ValueError(
-                "Tavily API key not provided. Pass 'tavily_api_key' in secrets."
-            )
-
-        PAGE_SIZE = 10000
-
-        try:
-            response = await self.tavily_client.extract(urls=[params.url])
-
-            results = response.get("results", [])
-            if not results:
-                return ToolOutput(
-                    blocks=[TextBlock(text=f"No content extracted from {params.url}")],
-                    metadata={"url": params.url, "results": []},
-                    reward=0.0,
-                    finished=False,
-                )
-
-            result = results[0]
-            raw_content = result.get("raw_content", "")
-            total_length = len(raw_content)
-
-            total_pages = max(1, (total_length + PAGE_SIZE - 1) // PAGE_SIZE)
-            page = max(1, min(params.page, total_pages))
-
-            start_idx = (page - 1) * PAGE_SIZE
-            end_idx = min(start_idx + PAGE_SIZE, total_length)
-            page_content = raw_content[start_idx:end_idx]
-
-            if total_pages == 1:
-                display_text = f"Content from {params.url}:\n\n{page_content}"
-            else:
-                display_text = f"Content from {params.url} (Page {page}/{total_pages}):\n\n{page_content}"
-                if page < total_pages:
-                    display_text += f"\n\n[Use fetch_url with page={page + 1} to see more content]"
-
-            return ToolOutput(
-                blocks=[TextBlock(text=display_text)],
-                metadata={
-                    "url": params.url,
-                    "page": page,
-                    "total_pages": total_pages,
-                    "total_length": total_length,
-                },
-                reward=0.0,
-                finished=False,
-            )
-        except Exception as e:
-            return ToolOutput(
-                blocks=[TextBlock(text=f"Failed to fetch URL: {str(e)}")],
-                metadata={"url": params.url, "error": str(e)},
-                reward=0.0,
-                finished=False,
-            )
 
     # ── Policy tools ──────────────────────────────────────────
 
@@ -527,7 +430,7 @@ RESEARCH AND MODELLING:
 You have access to web search and a compute sandbox. You are encouraged to:
 - Use web_search() to research monetary policy transmission, central bank strategy,
   and macroeconomic theory relevant to the current scenario
-- Use fetch_url() to read academic papers, BoE publications, and policy analysis
+- Use web_fetch() to read academic papers, BoE publications, and policy analysis
 - Use the sandbox (bash, read, write, etc.) to build quantitative models --
   for example, implementing reaction functions, forecasting models, or
   scenario analysis tools to inform your policy decisions
