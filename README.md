@@ -4,11 +4,11 @@
 
 ## Description
 
-Threadneedle is a monetary policy environment where an AI agent plays the role of the Bank of England's Monetary Policy Committee (MPC), setting Bank Rate and quantitative easing (QE) each quarter over 20 quarters. The economy evolves according to a macro model calibrated to UK empirical evidence. The underlying economic structure is not revealed to the agent -- it must be discovered through experimentation, research, and modelling.
+Threadneedle is a monetary policy environment where an AI agent plays the role of the Bank of England's Monetary Policy Committee (MPC), setting Bank Rate and quantitative easing (QE) each quarter over 20 quarters. The economy evolves according to a macro model calibrated to UK empirical evidence. The underlying economic structure is not revealed to the agent: it must be discovered through experimentation, research, and modelling.
 
 Agents have access to web search for researching monetary policy literature and a compute sandbox for building quantitative models to inform their decisions.
 
-Named after Threadneedle Street, London - the historic home of the Bank of England.
+Named after Threadneedle Street, London, the historic home of the Bank of England.
 
 ## Capabilities
 
@@ -21,11 +21,15 @@ Named after Threadneedle Street, London - the historic home of the Bank of Engla
 
 ## Compute Requirements
 
-Agents in Threadneedle are given a sandbox with a Python data science environment.
+Agents in Threadneedle are given a sandbox with a Python data science environment (`generalreasoning/python-ds:3.12-tools` image, `0.5:1` machine size, network access enabled).
+
+## License
+
+[MIT](https://opensource.org/licenses/MIT).
 
 ## Tasks
 
-There are four training tasks and two test tasks, each representing a distinct macroeconomic scenario calibrated to UK historical episodes:
+There are 4 tasks in the `train` split and 2 in `test`, each representing a distinct macroeconomic scenario calibrated to UK historical episodes:
 
 ### Train
 
@@ -60,19 +64,19 @@ No external data files are required. The economic model and all scenarios are de
 Agents have access to three categories of tools:
 
 ### Policy Tools (3)
-1. **`set_policy(bank_rate, qe)`** -- Set Bank Rate (0.1-15.0%) and QE flow (-5.0 to +5.0% GDP) for the current quarter. This is the main action tool; each call advances the economy by one quarter and returns the new economic state, Taylor Rule baseline comparison, and reward.
-2. **`view_economy()`** -- View the current macroeconomic state and scenario description.
-3. **`view_history()`** -- View all past quarters' policy decisions and economic outcomes.
+1. **`set_policy(bank_rate, qe)`**: Set Bank Rate (0.1-15.0%) and QE flow (-5.0 to +5.0% GDP) for the current quarter. This is the main action tool; each call advances the economy by one quarter and returns the new economic state, Taylor Rule baseline comparison, and reward.
+2. **`view_economy()`**: View the current macroeconomic state and scenario description.
+3. **`view_history()`**: View all past quarters' policy decisions and economic outcomes.
 
 ### Research Tools (2)
-4. **`web_search(query)`** -- Search the web for monetary policy research, macroeconomic theory, and central bank publications.
-5. **`web_fetch(url, page)`** -- Fetch content from a URL with pagination support.
+4. **`web_search(query)`**: Search the web for monetary policy research, macroeconomic theory, and central bank publications.
+5. **`web_fetch(url, page)`**: Fetch content from a URL with pagination support.
 
 ### CLI Tools (9)
-6. **`bash(command)`** -- Execute shell commands in the compute sandbox.
-7. **`read(file_path)`**, **`write(file_path, content)`**, **`edit(file_path, ...)`**, **`multi_edit(file_path, ...)`** -- File management tools.
-8. **`glob(pattern)`**, **`grep(pattern)`**, **`ls(path)`** -- File search tools.
-9. **`todo_write(todos)`** -- Task tracking.
+6. **`bash(command)`**: Execute shell commands in the compute sandbox.
+7. **`read(file_path)`**, **`write(file_path, content)`**, **`edit(file_path, ...)`**, **`multi_edit(file_path, ...)`**: File management tools.
+8. **`glob(pattern)`**, **`grep(pattern)`**, **`ls(path)`**: File search tools.
+9. **`todo_write(todos)`**: Task tracking.
 
 ## Time Horizon
 
@@ -90,11 +94,11 @@ The Taylor Rule baseline provides a competitive benchmark. The underlying econom
 
 ## Other Environment Requirements
 
-Threadneedle requires a `tavily_api_key` secret for web search and URL fetching capabilities.
+Threadneedle needs no external secrets by default. Web search and fetch are optional aids; if the environment is configured to use the Tavily search backend, they read a `tavily_api_key` secret, and without it they report themselves unavailable rather than ending the episode.
 
 ## Safety
 
-Threadneedle simulates monetary policy decisions in a stylized macroeconomic model. Agents interact only with the model through setting interest rates and QE -- there are no real-world consequences. The environment does not involve interaction with other agents, real financial markets, or actual policy implementation.
+Threadneedle simulates monetary policy decisions in a stylized macroeconomic model. Agents interact only with the model through setting interest rates and QE; there are no real-world consequences. The environment does not involve interaction with other agents, real financial markets, or actual policy implementation.
 
 ## Citations
 
